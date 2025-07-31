@@ -2,10 +2,35 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Users, Package, Truck, FileText, Settings, Clock, QrCode } from "lucide-react";
+import { Users, Package, Truck, FileText, Settings, Clock, QrCode, LogOut } from "lucide-react";
+import { useAuth } from "@/hooks/useAuth";
+import { AuthPage } from "@/components/auth/AuthPage";
+import { useToast } from "@/hooks/use-toast";
 
 const Index = () => {
+  const { user, loading, signOut } = useAuth();
+  const { toast } = useToast();
   const [activeModule, setActiveModule] = useState<string | null>(null);
+
+  const handleSignOut = async () => {
+    await signOut();
+    toast({
+      title: "Logout realizado",
+      description: "Você foi desconectado com sucesso",
+    });
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Carregando...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthPage onSuccess={() => {}} />;
+  }
 
   const modules = [
     {
@@ -73,10 +98,27 @@ const Index = () => {
                 Sistema de Gestão de Obra
               </Badge>
             </div>
-            <Button variant="outline" size="sm">
-              <Settings className="w-4 h-4 mr-2" />
-              Configurações
-            </Button>
+            <div className="flex items-center space-x-4">
+              <div className="text-right">
+                <p className="text-sm text-gray-600">Bem-vindo,</p>
+                <p className="font-semibold text-gray-900">{user.user_metadata?.full_name || user.email}</p>
+                <Badge variant="outline" className="text-xs">
+                  {user.user_metadata?.role || 'Usuário'} - {user.user_metadata?.company || 'Empresa'}
+                </Badge>
+              </div>
+              <Button variant="outline" size="sm">
+                <Settings className="w-4 h-4 mr-2" />
+                Configurações
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleSignOut}
+              >
+                <LogOut className="w-4 h-4 mr-2" />
+                Sair
+              </Button>
+            </div>
           </div>
         </div>
       </header>
