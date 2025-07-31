@@ -7,8 +7,8 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 const registerSchema = z.object({
   email: z.string().email("Email inválido"),
@@ -34,6 +34,7 @@ interface RegisterFormProps {
 export function RegisterForm({ onSuccess, onToggleMode }: RegisterFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { signUp } = useAuth();
   
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
@@ -50,24 +51,17 @@ export function RegisterForm({ onSuccess, onToggleMode }: RegisterFormProps) {
   async function onSubmit(data: RegisterFormData) {
     setIsLoading(true);
     try {
-      // Registrar usuário no Supabase Auth
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      await signUp({
         email: data.email,
         password: data.password,
-        options: {
-          data: {
-            full_name: data.fullName,
-            role: data.role,
-            company: data.company,
-          },
-        },
+        name: data.fullName,
+        role: data.role,
+        company: data.company,
       });
-
-      if (authError) throw authError;
 
       toast({
         title: "Registro realizado com sucesso!",
-        description: "Verifique seu email para confirmar a conta",
+        description: "Bem-vindo ao Tecnobra",
       });
       
       onSuccess();

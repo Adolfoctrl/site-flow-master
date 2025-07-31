@@ -101,9 +101,9 @@ const Index = () => {
             <div className="flex items-center space-x-4">
               <div className="text-right">
                 <p className="text-sm text-gray-600">Bem-vindo,</p>
-                <p className="font-semibold text-gray-900">{user.user_metadata?.full_name || user.email}</p>
+                <p className="font-semibold text-gray-900">{user.name || user.email}</p>
                 <Badge variant="outline" className="text-xs">
-                  {user.user_metadata?.role || 'Usuário'} - {user.user_metadata?.company || 'Empresa'}
+                  {user.role || 'Usuário'} - {user.company || 'Empresa'}
                 </Badge>
               </div>
               <Button variant="outline" size="sm">

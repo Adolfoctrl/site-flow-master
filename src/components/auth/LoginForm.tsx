@@ -6,8 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
 
 const loginSchema = z.object({
   email: z.string().email("Email inválido"),
@@ -24,6 +24,7 @@ interface LoginFormProps {
 export function LoginForm({ onSuccess, onToggleMode }: LoginFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
+  const { signIn } = useAuth();
   
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -36,12 +37,7 @@ export function LoginForm({ onSuccess, onToggleMode }: LoginFormProps) {
   async function onSubmit(data: LoginFormData) {
     setIsLoading(true);
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: data.email,
-        password: data.password,
-      });
-
-      if (error) throw error;
+      await signIn(data.email, data.password);
 
       toast({
         title: "Login realizado com sucesso!",
