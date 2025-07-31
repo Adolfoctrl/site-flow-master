@@ -6,6 +6,7 @@ import { Users, Package, Truck, FileText, Settings, Clock, QrCode, LogOut } from
 import { useAuth } from "@/hooks/useAuth";
 import { AuthPage } from "@/components/auth/AuthPage";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
 
 const Index = () => {
   const { user, loading, signOut } = useAuth();
@@ -202,7 +203,6 @@ const Index = () => {
               <Card 
                 key={module.id} 
                 className="cursor-pointer transition-all duration-200 hover:shadow-lg hover:scale-105"
-                onClick={() => setActiveModule(module.id)}
               >
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between">
@@ -219,9 +219,15 @@ const Index = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Button className="w-full" variant="outline">
-                    Acessar Módulo
-                  </Button>
+                  <Link 
+                    to={module.id === 'employees' ? '/employees' : 
+                         module.id === 'equipment' ? '/equipment' :
+                         module.id === 'machines' ? '/machines' : '#'}
+                  >
+                    <Button className="w-full" variant="outline">
+                      Acessar Módulo
+                    </Button>
+                  </Link>
                 </CardContent>
               </Card>
             );
