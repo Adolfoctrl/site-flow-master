@@ -51,7 +51,7 @@ const Index = () => {
       count: "89 itens"
     },
     {
-      id: "machines",
+      id: "rental-control",
       title: "Máquinas Alugadas",
       description: "Controle de tempo e relatórios",
       icon: Clock,
@@ -222,7 +222,8 @@ const Index = () => {
                   <Link 
                     to={module.id === 'employees' ? '/employees' : 
                          module.id === 'equipment' ? '/equipment' :
-                         module.id === 'machines' ? '/machines' : '#'}
+                         module.id === 'machines' ? '/machines' :
+                         module.id === 'rental-control' ? '/rental-control' : '#'}
                   >
                     <Button className="w-full" variant="outline">
                       Acessar Módulo
