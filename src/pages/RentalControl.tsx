@@ -52,7 +52,6 @@ interface WorkSession {
 }
 
 export default function RentalControl() {
-  console.log("RentalControl component started");
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [machines, setMachines] = useState<RentalMachine[]>([]);
@@ -70,7 +69,7 @@ export default function RentalControl() {
       type: "",
       model: "",
       supplier: "",
-      hourlyRate: 0,
+      hourlyRate: undefined,
       plate: "",
       operator: "",
     },
@@ -280,10 +279,20 @@ export default function RentalControl() {
         machine: machine.name,
         supplier: machine.supplier,
         operator: machine.operator,
+        plate: machine.plate,
+        type: machine.type,
+        model: machine.model,
+        totalMinutes: totalMinutes,
         hours: totalHours,
         rate: machine.hourlyRate,
         cost: totalCost,
-        sessions: machine.filteredSessions.length
+        sessions: machine.filteredSessions.length,
+        detailedSessions: machine.filteredSessions.map(session => ({
+          startTime: new Date(session.startTime).toLocaleString('pt-BR'),
+          endTime: session.endTime ? new Date(session.endTime).toLocaleString('pt-BR') : 'Em andamento',
+          duration: `${Math.floor(session.duration / 60)}h ${session.duration % 60}m`,
+          date: new Date(session.date).toLocaleDateString('pt-BR')
+        }))
       };
     });
 
@@ -293,14 +302,15 @@ export default function RentalControl() {
   const printReport = () => {
     const reportData = generateReport();
     const totalCost = reportData.reduce((acc, item) => acc + item.cost, 0);
-    const totalHours = reportData.reduce((acc, item) => acc + item.hours, 0);
+    const totalMinutes = reportData.reduce((acc, item) => acc + item.totalMinutes, 0);
+    const totalHours = totalMinutes / 60;
 
     const printWindow = window.open('', '_blank');
     if (printWindow) {
       printWindow.document.write(`
         <html>
           <head>
-            <title>Relatório de Máquinas Alugadas</title>
+            <title>Relatório Completo de Máquinas Alugadas</title>
             <style>
               body { font-family: Arial, sans-serif; margin: 20px; }
               table { width: 100%; border-collapse: collapse; margin-top: 20px; }
@@ -308,22 +318,35 @@ export default function RentalControl() {
               th { background-color: #f2f2f2; }
               .header { text-align: center; margin-bottom: 20px; }
               .summary { margin-top: 20px; padding: 10px; background-color: #f9f9f9; }
+              .machine-section { margin-top: 30px; page-break-inside: avoid; }
+              .sessions-table { margin-top: 10px; font-size: 0.9em; }
+              .sessions-table th, .sessions-table td { padding: 4px 6px; }
             </style>
           </head>
           <body>
             <div class="header">
-              <h1>Relatório de Máquinas Alugadas</h1>
-              <p>Período: ${reportPeriod === 'custom' ? `${customStartDate} a ${customEndDate}` : reportPeriod}</p>
-              <p>Data de Geração: ${new Date().toLocaleDateString('pt-BR')}</p>
+              <h1>Relatório Completo de Máquinas Alugadas</h1>
+              <p>Período: ${reportPeriod === 'custom' ? `${new Date(customStartDate).toLocaleDateString('pt-BR')} a ${new Date(customEndDate).toLocaleDateString('pt-BR')}` : reportPeriod}</p>
+              <p>Data de Geração: ${new Date().toLocaleDateString('pt-BR')} às ${new Date().toLocaleTimeString('pt-BR')}</p>
+            </div>
+            
+            <div class="summary">
+              <h3>Resumo Geral</h3>
+              <p><strong>Total de Tempo:</strong> ${Math.floor(totalMinutes / 60)}h ${totalMinutes % 60}m (${formatHours(totalHours)})</p>
+              <p><strong>Valor Total:</strong> € ${totalCost.toFixed(2)}</p>
+              <p><strong>Máquinas Ativas:</strong> ${reportData.filter(item => item.totalMinutes > 0).length}</p>
+              <p><strong>Valor Médio/Hora:</strong> € ${totalHours > 0 ? (totalCost / totalHours).toFixed(2) : '0.00'}</p>
             </div>
             
             <table>
               <thead>
                 <tr>
                   <th>Máquina</th>
+                  <th>Tipo/Modelo</th>
+                  <th>Placa</th>
                   <th>Fornecedor</th>
                   <th>Operador</th>
-                  <th>Horas Trabalhadas</th>
+                  <th>Tempo Total</th>
                   <th>Valor/Hora</th>
                   <th>Valor Total</th>
                   <th>Sessões</th>
@@ -332,24 +355,51 @@ export default function RentalControl() {
               <tbody>
                 ${reportData.map(item => `
                   <tr>
-                    <td>${item.machine}</td>
+                    <td><strong>${item.machine}</strong></td>
+                    <td>${item.type} - ${item.model}</td>
+                    <td>${item.plate}</td>
                     <td>${item.supplier}</td>
                     <td>${item.operator}</td>
-                    <td>${formatHours(item.hours)}</td>
-                    <td>R$ ${item.rate.toFixed(2)}</td>
-                    <td>R$ ${item.cost.toFixed(2)}</td>
+                    <td>${Math.floor(item.totalMinutes / 60)}h ${item.totalMinutes % 60}m</td>
+                    <td>€ ${item.rate.toFixed(2)}</td>
+                    <td><strong>€ ${item.cost.toFixed(2)}</strong></td>
                     <td>${item.sessions}</td>
                   </tr>
                 `).join('')}
               </tbody>
             </table>
-            
-            <div class="summary">
-              <h3>Resumo</h3>
-              <p><strong>Total de Horas:</strong> ${formatHours(totalHours)}</p>
-              <p><strong>Valor Total:</strong> R$ ${totalCost.toFixed(2)}</p>
-              <p><strong>Máquinas Ativas:</strong> ${reportData.length}</p>
-            </div>
+
+            ${reportData.filter(item => item.detailedSessions.length > 0).map(item => `
+              <div class="machine-section">
+                <h3>Detalhes de Sessões - ${item.machine}</h3>
+                <table class="sessions-table">
+                  <thead>
+                    <tr>
+                      <th>Data</th>
+                      <th>Início</th>
+                      <th>Fim</th>
+                      <th>Duração</th>
+                      <th>Valor</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${item.detailedSessions.map(session => {
+                      const sessionMinutes = parseInt(session.duration.split('h')[0]) * 60 + parseInt(session.duration.split('h')[1].split('m')[0]);
+                      const sessionValue = (sessionMinutes / 60) * item.rate;
+                      return `
+                        <tr>
+                          <td>${session.date}</td>
+                          <td>${session.startTime.split(' ')[1]}</td>
+                          <td>${session.endTime.includes('Em andamento') ? session.endTime : session.endTime.split(' ')[1]}</td>
+                          <td>${session.duration}</td>
+                          <td>€ ${sessionValue.toFixed(2)}</td>
+                        </tr>
+                      `;
+                    }).join('')}
+                  </tbody>
+                </table>
+              </div>
+            `).join('')}
           </body>
         </html>
       `);
@@ -358,8 +408,6 @@ export default function RentalControl() {
     }
   };
 
-  console.log("RentalControl rendering, machines:", machines.length);
-  
   return (
     <div className="p-6">
       <div className="max-w-7xl mx-auto">
@@ -392,7 +440,7 @@ export default function RentalControl() {
               
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button onClick={() => console.log("Botão Registrar Máquina clicado")}>
+                  <Button>
                     <Plus className="w-4 h-4 mr-2" />
                     Registrar Máquina
                   </Button>
@@ -488,19 +536,23 @@ export default function RentalControl() {
                         control={form.control}
                         name="hourlyRate"
                         render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Valor por Hora (R$)</FormLabel>
-                            <FormControl>
-                              <Input 
-                                type="number" 
-                                step="0.01"
-                                placeholder="0.00" 
-                                {...field}
-                                onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
+                           <FormItem>
+                             <FormLabel>Valor por Hora (€)</FormLabel>
+                             <FormControl>
+                               <Input 
+                                 type="number" 
+                                 step="0.01"
+                                 placeholder="Insira o valor..." 
+                                 {...field}
+                                 value={field.value || ""}
+                                 onChange={(e) => {
+                                   const value = e.target.value;
+                                   field.onChange(value === "" ? undefined : parseFloat(value));
+                                 }}
+                               />
+                             </FormControl>
+                             <FormMessage />
+                           </FormItem>
                         )}
                       />
                       <div className="flex justify-end space-x-2">
@@ -545,10 +597,10 @@ export default function RentalControl() {
                           <p className="text-gray-600">Operador:</p>
                           <p className="font-medium">{machine.operator}</p>
                         </div>
-                        <div>
-                          <p className="text-gray-600">R$/Hora:</p>
-                          <p className="font-medium">R$ {machine.hourlyRate.toFixed(2)}</p>
-                        </div>
+                         <div>
+                           <p className="text-gray-600">€/Hora:</p>
+                           <p className="font-medium">€ {machine.hourlyRate.toFixed(2)}</p>
+                         </div>
                       </div>
                       
                       <div className="border-t pt-4">
@@ -564,9 +616,9 @@ export default function RentalControl() {
                         )}
                         <div className="flex justify-between items-center">
                           <span className="text-sm text-gray-600">Valor Acumulado:</span>
-                          <span className="font-bold text-blue-600">
-                            R$ {(machine.totalHours * machine.hourlyRate).toFixed(2)}
-                          </span>
+                           <span className="font-bold text-blue-600">
+                             € {(machine.totalHours * machine.hourlyRate).toFixed(2)}
+                           </span>
                         </div>
                       </div>
 
@@ -688,8 +740,8 @@ export default function RentalControl() {
                         <div className="flex items-center space-x-2">
                           <FileText className="w-8 h-8 text-green-500" />
                           <div>
-                            <p className="text-sm font-medium text-gray-600">Valor Total</p>
-                            <p className="text-2xl font-bold">R$ {totalCost.toFixed(2)}</p>
+                             <p className="text-sm font-medium text-gray-600">Valor Total</p>
+                             <p className="text-2xl font-bold">€ {totalCost.toFixed(2)}</p>
                           </div>
                         </div>
                       </CardContent>
@@ -711,8 +763,8 @@ export default function RentalControl() {
                           <Clock className="w-8 h-8 text-orange-500" />
                           <div>
                             <p className="text-sm font-medium text-gray-600">Média/Hora</p>
-                            <p className="text-2xl font-bold">
-                              R$ {totalHours > 0 ? (totalCost / totalHours).toFixed(2) : '0.00'}
+                             <p className="text-2xl font-bold">
+                               € {totalHours > 0 ? (totalCost / totalHours).toFixed(2) : '0.00'}
                             </p>
                           </div>
                         </div>
@@ -730,30 +782,34 @@ export default function RentalControl() {
               </CardHeader>
               <CardContent>
                 <div className="overflow-x-auto">
-                  <table className="w-full border-collapse">
-                    <thead>
-                      <tr className="border-b">
-                        <th className="text-left p-2">Máquina</th>
-                        <th className="text-left p-2">Fornecedor</th>
-                        <th className="text-left p-2">Operador</th>
-                        <th className="text-right p-2">Horas</th>
-                        <th className="text-right p-2">Valor/Hora</th>
-                        <th className="text-right p-2">Total</th>
-                        <th className="text-center p-2">Sessões</th>
-                      </tr>
-                    </thead>
+                   <table className="w-full border-collapse">
+                     <thead>
+                       <tr className="border-b">
+                         <th className="text-left p-2">Máquina</th>
+                         <th className="text-left p-2">Tipo</th>
+                         <th className="text-left p-2">Placa</th>
+                         <th className="text-left p-2">Fornecedor</th>
+                         <th className="text-left p-2">Operador</th>
+                         <th className="text-right p-2">Tempo</th>
+                         <th className="text-right p-2">Valor/Hora</th>
+                         <th className="text-right p-2">Total</th>
+                         <th className="text-center p-2">Sessões</th>
+                       </tr>
+                     </thead>
                     <tbody>
-                      {generateReport().map((item, index) => (
-                        <tr key={index} className="border-b hover:bg-gray-50">
-                          <td className="p-2 font-medium">{item.machine}</td>
-                          <td className="p-2">{item.supplier}</td>
-                          <td className="p-2">{item.operator}</td>
-                          <td className="p-2 text-right">{formatHours(item.hours)}</td>
-                          <td className="p-2 text-right">R$ {item.rate.toFixed(2)}</td>
-                          <td className="p-2 text-right font-bold">R$ {item.cost.toFixed(2)}</td>
-                          <td className="p-2 text-center">{item.sessions}</td>
-                        </tr>
-                      ))}
+                       {generateReport().map((item, index) => (
+                         <tr key={index} className="border-b hover:bg-gray-50">
+                           <td className="p-2 font-medium">{item.machine}</td>
+                           <td className="p-2">{item.type} - {item.model}</td>
+                           <td className="p-2">{item.plate}</td>
+                           <td className="p-2">{item.supplier}</td>
+                           <td className="p-2">{item.operator}</td>
+                           <td className="p-2 text-right">{Math.floor(item.totalMinutes / 60)}h {item.totalMinutes % 60}m</td>
+                           <td className="p-2 text-right">€ {item.rate.toFixed(2)}</td>
+                           <td className="p-2 text-right font-bold">€ {item.cost.toFixed(2)}</td>
+                           <td className="p-2 text-center">{item.sessions}</td>
+                         </tr>
+                       ))}
                     </tbody>
                   </table>
                 </div>
