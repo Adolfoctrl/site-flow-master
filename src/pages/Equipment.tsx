@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Plus, Search, Edit, Trash2, Settings } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Link } from "react-router-dom";
 
 interface Equipment {
@@ -108,10 +109,37 @@ export default function Equipment() {
             </div>
           </div>
           
-          <Button>
-            <Plus className="w-4 h-4 mr-2" />
-            Novo Equipamento
-          </Button>
+          <Dialog>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
+                Novo Equipamento
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Novo Equipamento</DialogTitle>
+                <DialogDescription>
+                  Cadastre um novo equipamento no sistema
+                </DialogDescription>
+              </DialogHeader>
+              <div className="space-y-4">
+                <Input placeholder="Nome do equipamento" />
+                <Input placeholder="Tipo" />
+                <Input placeholder="Modelo" />
+                <Input placeholder="Número de série" />
+                <Input placeholder="Localização" />
+                <Button className="w-full" onClick={() => {
+                  toast({
+                    title: "Equipamento cadastrado!",
+                    description: "QR Code gerado automaticamente.",
+                  });
+                }}>
+                  Cadastrar e Gerar QR
+                </Button>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Search */}

@@ -75,12 +75,13 @@ const Index = () => {
       count: "15 emprestados"
     },
     {
-      id: "visitors",
-      title: "Visitantes",
-      description: "Controle de acesso e veículos",
+      id: "visits",
+      title: "Controle de Visitas",
+      description: "Registro de visitantes",
       icon: Truck,
       color: "bg-orange-500",
-      count: "8 hoje"
+      count: "8 hoje",
+      href: "/visits"
     },
     {
       id: "deliveries",
@@ -96,7 +97,8 @@ const Index = () => {
       description: "Análises e exportações",
       icon: FileText,
       color: "bg-indigo-500",
-      count: "Gerar"
+      count: "Gerar",
+      href: "/reports"
     }
   ];
 
@@ -235,13 +237,14 @@ const Index = () => {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Link 
-                    to={module.id === 'employees' ? '/employees' : 
+                   <Link 
+                    to={module.href || 
+                        (module.id === 'employees' ? '/employees' : 
                          module.id === 'equipment' ? '/equipment' :
                          module.id === 'machines' ? '/machines' :
                          module.id === 'rental-control' ? '/rental-control' :
                          module.id === 'check-in' ? '/check-in' :
-                         module.id === 'equipment-loan' ? '/equipment-loan' : '#'}
+                         module.id === 'equipment-loan' ? '/equipment-loan' : '#')}
                   >
                     <Button className="w-full" variant="outline">
                       Acessar Módulo

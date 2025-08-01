@@ -24,12 +24,14 @@ const employeeSchema = z.object({
   role: z.enum(["admin", "supervisor", "worker", "visitor"]),
   department: z.string().min(2, "Departamento é obrigatório"),
   phone: z.string().min(10, "Telefone inválido"),
+  photo: z.string().optional(),
 });
 
 type Employee = z.infer<typeof employeeSchema> & {
   id: string;
   status: "active" | "inactive";
   createdAt: string;
+  photo?: string;
 };
 
 export default function Employees() {
@@ -145,12 +147,20 @@ export default function Employees() {
       // Clean up
       document.body.removeChild(cardElement);
 
-      // Create WhatsApp message with image
+      // Create download link for the card image
+      const cardImageUrl = URL.createObjectURL(imageBlob);
+      const cardDownloadLink = `${window.location.origin}/cartao/${employee.id}`;
+
+      // Create WhatsApp message with download link
       const whatsappMessage = `🏗️ *TECNOBRA - Cartão de Funcionário*
 
 Olá ${employee.name}!
 
-Seu cartão de funcionário foi gerado com sucesso. Use o QR Code do cartão para:
+Seu cartão de funcionário foi gerado com sucesso. 
+
+📲 *Baixe seu cartão aqui:* ${cardDownloadLink}
+
+Use o QR Code do cartão para:
 ✅ Marcar presença na obra
 ✅ Retirar equipamentos
 ✅ Identificação no local
@@ -168,11 +178,8 @@ Para dúvidas, entre em contato com o RH.`;
 
       const phoneNumber = employee.phone.replace(/\D/g, '');
       const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(whatsappMessage)}`;
-
-      // Create download link for the card image
-      const downloadUrl = URL.createObjectURL(imageBlob);
       const link = document.createElement('a');
-      link.href = downloadUrl;
+      link.href = cardImageUrl;
       link.download = `cartao_${employee.name.replace(/\s+/g, '_')}.png`;
 
       toast({
@@ -377,6 +384,41 @@ Para dúvidas, entre em contato com o RH.`;
                             <SelectItem value="visitor">Visitante</SelectItem>
                           </SelectContent>
                         </Select>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="photo"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Foto do Funcionário</FormLabel>
+                        <FormControl>
+                          <Input 
+                            type="file" 
+                            accept="image/*"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const reader = new FileReader();
+                                reader.onload = (event) => {
+                                  field.onChange(event.target?.result as string);
+                                };
+                                reader.readAsDataURL(file);
+                              }
+                            }}
+                          />
+                        </FormControl>
+                        {field.value && (
+                          <div className="mt-2">
+                            <img 
+                              src={field.value} 
+                              alt="Preview" 
+                              className="w-20 h-20 object-cover rounded-full border"
+                            />
+                          </div>
+                        )}
                         <FormMessage />
                       </FormItem>
                     )}

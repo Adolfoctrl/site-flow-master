@@ -29,13 +29,21 @@ export const EmployeeCard = forwardRef<HTMLDivElement, EmployeeCardProps>(
           </div>
         </div>
 
-        {/* Employee Photo Placeholder */}
+        {/* Employee Photo */}
         <div className="flex justify-center mb-4">
-          <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center">
-            <span className="text-2xl font-bold text-gray-600">
-              {employee.name.split(' ').map(n => n[0]).join('')}
-            </span>
-          </div>
+          {employee.photo ? (
+            <img 
+              src={employee.photo} 
+              alt={employee.name}
+              className="w-24 h-24 object-cover rounded-full border-2 border-gray-300"
+            />
+          ) : (
+            <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center">
+              <span className="text-2xl font-bold text-gray-600">
+                {employee.name.split(' ').map(n => n[0]).join('')}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Employee Info */}
