@@ -4,8 +4,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, Search, Edit, Trash2, Settings } from "lucide-react";
+import { ArrowLeft, Plus, Search, Edit, Trash2, Settings, QrCode } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import QRCode from "qrcode";
 
 interface Equipment {
   id: string;
@@ -17,11 +19,20 @@ interface Equipment {
   location: string;
   lastMaintenance: string;
   nextMaintenance: string;
+  qrCode?: string;
 }
 
 export default function Equipment() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [newEquipment, setNewEquipment] = useState({
+    name: "",
+    type: "",
+    model: "",
+    serialNumber: "",
+    location: ""
+  });
   const [equipment, setEquipment] = useState<Equipment[]>([
     {
       id: "1",
@@ -90,6 +101,68 @@ export default function Equipment() {
     return diffDays <= 7;
   };
 
+  const generateQRCode = async (equipmentData: any) => {
+    try {
+      const qrData = JSON.stringify({
+        id: equipmentData.id,
+        name: equipmentData.name,
+        serialNumber: equipmentData.serialNumber,
+        type: equipmentData.type
+      });
+      const qrCodeDataURL = await QRCode.toDataURL(qrData);
+      return qrCodeDataURL;
+    } catch (error) {
+      console.error('Erro ao gerar QR Code:', error);
+      return null;
+    }
+  };
+
+  const handleAddEquipment = async () => {
+    if (!newEquipment.name || !newEquipment.type || !newEquipment.serialNumber) {
+      toast({
+        title: "Erro!",
+        description: "Preencha todos os campos obrigatórios.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const id = Date.now().toString();
+    const today = new Date();
+    const nextMaintenance = new Date();
+    nextMaintenance.setMonth(nextMaintenance.getMonth() + 3);
+
+    const equipmentData = {
+      id,
+      ...newEquipment,
+      status: "operational" as const,
+      lastMaintenance: today.toISOString().split('T')[0],
+      nextMaintenance: nextMaintenance.toISOString().split('T')[0]
+    };
+
+    const qrCode = await generateQRCode(equipmentData);
+    
+    const finalEquipment = {
+      ...equipmentData,
+      qrCode
+    };
+
+    setEquipment(prev => [...prev, finalEquipment]);
+    setNewEquipment({
+      name: "",
+      type: "",
+      model: "",
+      serialNumber: "",
+      location: ""
+    });
+    setIsDialogOpen(false);
+
+    toast({
+      title: "Equipamento cadastrado!",
+      description: "QR Code gerado automaticamente.",
+    });
+  };
+
   return (
     <div className="p-6">
       <div className="max-w-7xl mx-auto">
@@ -100,14 +173,14 @@ export default function Equipment() {
             <p className="text-gray-600">Gerencie os equipamentos da empresa</p>
           </div>
           
-          <Dialog>
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <DialogTrigger asChild>
               <Button>
                 <Plus className="w-4 h-4 mr-2" />
                 Novo Equipamento
               </Button>
             </DialogTrigger>
-            <DialogContent>
+            <DialogContent className="max-w-md">
               <DialogHeader>
                 <DialogTitle>Novo Equipamento</DialogTitle>
                 <DialogDescription>
@@ -115,19 +188,60 @@ export default function Equipment() {
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4">
-                <Input placeholder="Nome do equipamento" />
-                <Input placeholder="Tipo" />
-                <Input placeholder="Modelo" />
-                <Input placeholder="Número de série" />
-                <Input placeholder="Localização" />
-                <Button className="w-full" onClick={() => {
-                  toast({
-                    title: "Equipamento cadastrado!",
-                    description: "QR Code gerado automaticamente.",
-                  });
-                }}>
-                  Cadastrar e Gerar QR
-                </Button>
+                <div>
+                  <Label htmlFor="name">Nome do Equipamento *</Label>
+                  <Input 
+                    id="name"
+                    placeholder="Nome do equipamento" 
+                    value={newEquipment.name}
+                    onChange={(e) => setNewEquipment(prev => ({ ...prev, name: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="type">Tipo *</Label>
+                  <Input 
+                    id="type"
+                    placeholder="Tipo" 
+                    value={newEquipment.type}
+                    onChange={(e) => setNewEquipment(prev => ({ ...prev, type: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="model">Modelo</Label>
+                  <Input 
+                    id="model"
+                    placeholder="Modelo" 
+                    value={newEquipment.model}
+                    onChange={(e) => setNewEquipment(prev => ({ ...prev, model: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="serial">Número de Série *</Label>
+                  <Input 
+                    id="serial"
+                    placeholder="Número de série" 
+                    value={newEquipment.serialNumber}
+                    onChange={(e) => setNewEquipment(prev => ({ ...prev, serialNumber: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="location">Localização</Label>
+                  <Input 
+                    id="location"
+                    placeholder="Localização" 
+                    value={newEquipment.location}
+                    onChange={(e) => setNewEquipment(prev => ({ ...prev, location: e.target.value }))}
+                  />
+                </div>
+                <div className="flex space-x-2 pt-4">
+                  <Button variant="outline" onClick={() => setIsDialogOpen(false)} className="flex-1">
+                    Cancelar
+                  </Button>
+                  <Button onClick={handleAddEquipment} className="flex-1">
+                    <QrCode className="w-4 h-4 mr-2" />
+                    Cadastrar e Gerar QR
+                  </Button>
+                </div>
               </div>
             </DialogContent>
           </Dialog>
@@ -245,6 +359,19 @@ export default function Equipment() {
                       <strong>Próxima Manutenção:</strong> {new Date(eq.nextMaintenance).toLocaleDateString('pt-BR')}
                     </p>
                   </div>
+
+                  {eq.qrCode && (
+                    <div className="mt-3 pt-3 border-t">
+                      <div className="flex items-center justify-center">
+                        <img 
+                          src={eq.qrCode} 
+                          alt={`QR Code - ${eq.name}`}
+                          className="w-20 h-20"
+                        />
+                      </div>
+                      <p className="text-xs text-center text-gray-500 mt-1">QR Code do Equipamento</p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
