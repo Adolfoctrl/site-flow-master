@@ -45,7 +45,21 @@ export function ForgotPasswordForm({ onBack }: ForgotPasswordFormProps) {
     await new Promise(resolve => setTimeout(resolve, 500));
     
     // Verificar se o email existe
-    const users = JSON.parse(localStorage.getItem('tecnobra_users') || '[]');
+    let users = JSON.parse(localStorage.getItem('tecnobra_users') || '[]');
+    
+    // Se não há usuários mas há um usuário logado, vamos sincronizar
+    const currentUser = localStorage.getItem('tecnobra_user');
+    if (users.length === 0 && currentUser) {
+      const user = JSON.parse(currentUser);
+      // Criar o usuário na lista com uma senha padrão para recuperação
+      const userWithPassword = {
+        ...user,
+        password: '123456' // Senha padrão para recuperação
+      };
+      users.push(userWithPassword);
+      localStorage.setItem('tecnobra_users', JSON.stringify(users));
+    }
+    
     console.log('Usuários cadastrados:', users);
     console.log('Email procurado:', data.email);
     
