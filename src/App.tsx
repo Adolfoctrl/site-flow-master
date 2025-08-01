@@ -31,7 +31,7 @@ function AppRoutes() {
   }
 
   if (!user) {
-    return <AuthPage onSuccess={() => {}} />;
+    return <AuthPage onSuccess={() => window.location.reload()} />;
   }
 
   return (
