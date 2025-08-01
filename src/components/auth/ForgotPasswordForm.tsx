@@ -41,50 +41,57 @@ export function ForgotPasswordForm({ onBack }: ForgotPasswordFormProps) {
   const onSubmitEmail = async (data: ForgotPasswordData) => {
     setIsLoading(true);
     
-    // Simular delay
-    await new Promise(resolve => setTimeout(resolve, 500));
+    try {
+      // Verificar se o email existe
+      let users = JSON.parse(localStorage.getItem('tecnobra_users') || '[]');
+      
+      // SEMPRE garantir que o usuário atual esteja na lista
+      const currentUser = localStorage.getItem('tecnobra_user');
+      if (currentUser) {
+        const user = JSON.parse(currentUser);
+        
+        // Verificar se o usuário já existe na lista
+        const existsInList = users.find((u: any) => u.email.toLowerCase() === user.email.toLowerCase());
+        
+        if (!existsInList) {
+          // Adicionar o usuário atual com senha padrão
+          const userWithPassword = {
+            ...user,
+            password: '123456' // Senha padrão
+          };
+          users.push(userWithPassword);
+          localStorage.setItem('tecnobra_users', JSON.stringify(users));
+        }
+      }
+      
+      const userExists = users.find((u: any) => u.email.toLowerCase() === data.email.toLowerCase());
+      
+      if (!userExists) {
+        toast({
+          variant: "destructive", 
+          title: "Email não encontrado",
+          description: "Este email não está cadastrado no sistema.",
+        });
+        setIsLoading(false);
+        return;
+      }
     
-    // Verificar se o email existe
-    let users = JSON.parse(localStorage.getItem('tecnobra_users') || '[]');
-    
-    // Se não há usuários mas há um usuário logado, vamos sincronizar
-    const currentUser = localStorage.getItem('tecnobra_user');
-    if (users.length === 0 && currentUser) {
-      const user = JSON.parse(currentUser);
-      // Criar o usuário na lista com uma senha padrão para recuperação
-      const userWithPassword = {
-        ...user,
-        password: '123456' // Senha padrão para recuperação
-      };
-      users.push(userWithPassword);
-      localStorage.setItem('tecnobra_users', JSON.stringify(users));
-    }
-    
-    console.log('Usuários cadastrados:', users);
-    console.log('Email procurado:', data.email);
-    
-    const userExists = users.find((u: any) => u.email.toLowerCase() === data.email.toLowerCase());
-    
-    if (!userExists) {
-      // Mostrar emails disponíveis para debug
-      const availableEmails = users.map((u: any) => u.email).join(', ');
+      setUserEmail(data.email);
+      setStep('reset');
+      
+      toast({
+        title: "Email encontrado!",
+        description: "Agora você pode redefinir sua senha.",
+      });
+    } catch (error) {
       toast({
         variant: "destructive",
-        title: "Email não encontrado",
-        description: `Este email não está cadastrado. Emails disponíveis: ${availableEmails || 'Nenhum usuário cadastrado'}`,
+        title: "Erro",
+        description: "Ocorreu um erro ao verificar o email.",
       });
+    } finally {
       setIsLoading(false);
-      return;
     }
-    
-    setUserEmail(data.email);
-    setStep('reset');
-    setIsLoading(false);
-    
-    toast({
-      title: "Email encontrado!",
-      description: "Agora você pode redefinir sua senha.",
-    });
   };
 
   const onSubmitReset = async (data: any) => {
