@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, Search, Edit, Trash2, Settings, QrCode } from "lucide-react";
+import { ArrowLeft, Plus, Search, Edit, Trash2, Settings, QrCode, Printer } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import QRCode from "qrcode";
@@ -26,6 +26,8 @@ export default function Equipment() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [editingEquipment, setEditingEquipment] = useState<Equipment | null>(null);
   const [newEquipment, setNewEquipment] = useState({
     name: "",
     type: "",
@@ -163,6 +165,102 @@ export default function Equipment() {
     });
   };
 
+  const handleEditEquipment = (equipment: Equipment) => {
+    setEditingEquipment(equipment);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleUpdateEquipment = async () => {
+    if (!editingEquipment) return;
+
+    if (!editingEquipment.name || !editingEquipment.type || !editingEquipment.serialNumber) {
+      toast({
+        title: "Erro!",
+        description: "Preencha todos os campos obrigatórios.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Regenerar QR code se dados importantes mudaram
+    const qrCode = await generateQRCode(editingEquipment);
+    const updatedEquipment = { ...editingEquipment, qrCode };
+
+    setEquipment(prev => prev.map(eq => 
+      eq.id === editingEquipment.id ? updatedEquipment : eq
+    ));
+
+    setIsEditDialogOpen(false);
+    setEditingEquipment(null);
+
+    toast({
+      title: "Equipamento atualizado!",
+      description: "QR Code atualizado automaticamente.",
+    });
+  };
+
+  const handleDeleteEquipment = (id: string) => {
+    setEquipment(prev => prev.filter(eq => eq.id !== id));
+    toast({
+      title: "Equipamento removido!",
+      description: "O equipamento foi removido do sistema.",
+    });
+  };
+
+  const handlePrintQR = (equipment: Equipment) => {
+    if (!equipment.qrCode) {
+      toast({
+        title: "Erro!",
+        description: "QR Code não disponível para este equipamento.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Criar uma nova janela para impressão
+    const printWindow = window.open('', '_blank');
+    if (printWindow) {
+      printWindow.document.write(`
+        <html>
+          <head>
+            <title>QR Code - ${equipment.name}</title>
+            <style>
+              body { 
+                font-family: Arial, sans-serif; 
+                text-align: center; 
+                padding: 20px; 
+              }
+              .qr-container { 
+                border: 1px solid #ccc; 
+                padding: 20px; 
+                margin: 20px auto; 
+                width: fit-content; 
+              }
+              img { 
+                width: 200px; 
+                height: 200px; 
+              }
+              h2 { margin-bottom: 10px; }
+              p { margin: 5px 0; color: #666; }
+            </style>
+          </head>
+          <body>
+            <div class="qr-container">
+              <h2>${equipment.name}</h2>
+              <p><strong>Tipo:</strong> ${equipment.type}</p>
+              <p><strong>Série:</strong> ${equipment.serialNumber}</p>
+              <p><strong>Local:</strong> ${equipment.location}</p>
+              <img src="${equipment.qrCode}" alt="QR Code - ${equipment.name}" />
+              <p><small>QR Code do Equipamento</small></p>
+            </div>
+          </body>
+        </html>
+      `);
+      printWindow.document.close();
+      printWindow.print();
+    }
+  };
+
   return (
     <div className="p-6">
       <div className="max-w-7xl mx-auto">
@@ -245,6 +343,76 @@ export default function Equipment() {
               </div>
             </DialogContent>
           </Dialog>
+
+          {/* Edit Equipment Dialog */}
+          <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>Editar Equipamento</DialogTitle>
+                <DialogDescription>
+                  Atualize as informações do equipamento
+                </DialogDescription>
+              </DialogHeader>
+              {editingEquipment && (
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="edit-name">Nome do Equipamento *</Label>
+                    <Input 
+                      id="edit-name"
+                      placeholder="Nome do equipamento" 
+                      value={editingEquipment.name}
+                      onChange={(e) => setEditingEquipment(prev => prev ? { ...prev, name: e.target.value } : null)}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-type">Tipo *</Label>
+                    <Input 
+                      id="edit-type"
+                      placeholder="Tipo" 
+                      value={editingEquipment.type}
+                      onChange={(e) => setEditingEquipment(prev => prev ? { ...prev, type: e.target.value } : null)}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-model">Modelo</Label>
+                    <Input 
+                      id="edit-model"
+                      placeholder="Modelo" 
+                      value={editingEquipment.model}
+                      onChange={(e) => setEditingEquipment(prev => prev ? { ...prev, model: e.target.value } : null)}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-serial">Número de Série *</Label>
+                    <Input 
+                      id="edit-serial"
+                      placeholder="Número de série" 
+                      value={editingEquipment.serialNumber}
+                      onChange={(e) => setEditingEquipment(prev => prev ? { ...prev, serialNumber: e.target.value } : null)}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="edit-location">Localização</Label>
+                    <Input 
+                      id="edit-location"
+                      placeholder="Localização" 
+                      value={editingEquipment.location}
+                      onChange={(e) => setEditingEquipment(prev => prev ? { ...prev, location: e.target.value } : null)}
+                    />
+                  </div>
+                  <div className="flex space-x-2 pt-4">
+                    <Button variant="outline" onClick={() => setIsEditDialogOpen(false)} className="flex-1">
+                      Cancelar
+                    </Button>
+                    <Button onClick={handleUpdateEquipment} className="flex-1">
+                      <Edit className="w-4 h-4 mr-2" />
+                      Atualizar
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
         </div>
 
         {/* Search */}
@@ -322,10 +490,30 @@ export default function Equipment() {
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg">{eq.name}</CardTitle>
                   <div className="flex space-x-1">
-                    <Button variant="ghost" size="sm">
+                    {eq.qrCode && (
+                      <Button 
+                        variant="ghost" 
+                        size="sm" 
+                        onClick={() => handlePrintQR(eq)}
+                        title="Imprimir QR Code"
+                      >
+                        <Printer className="w-4 h-4" />
+                      </Button>
+                    )}
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => handleEditEquipment(eq)}
+                      title="Editar equipamento"
+                    >
                       <Edit className="w-4 h-4" />
                     </Button>
-                    <Button variant="ghost" size="sm">
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={() => handleDeleteEquipment(eq.id)}
+                      title="Remover equipamento"
+                    >
                       <Trash2 className="w-4 h-4" />
                     </Button>
                   </div>
