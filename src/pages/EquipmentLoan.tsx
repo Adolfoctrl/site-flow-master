@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Package, QrCode, User, ArrowRight, RotateCcw } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import QRScanner from "@/components/QRScanner";
 
 interface LoanRecord {
   id: string;
@@ -37,6 +38,8 @@ export default function EquipmentLoan() {
   const [equipment, setEquipment] = useState<Equipment[]>([]);
   const [currentStep, setCurrentStep] = useState<"employee" | "equipment">("employee");
   const [selectedEmployee, setSelectedEmployee] = useState<any>(null);
+  const [isEmployeeScanning, setIsEmployeeScanning] = useState(false);
+  const [isEquipmentScanning, setIsEquipmentScanning] = useState(false);
 
   useEffect(() => {
     // Load loan records from localStorage
@@ -335,6 +338,15 @@ export default function EquipmentLoan() {
                     <QrCode className="h-4 w-4 mr-2" />
                     Identificar Funcionário
                   </Button>
+                  
+                  <QRScanner 
+                    onScan={(result) => {
+                      setEmployeeQR(result);
+                      handleEmployeeQRScan();
+                    }}
+                    isActive={isEmployeeScanning}
+                    onToggle={() => setIsEmployeeScanning(!isEmployeeScanning)}
+                  />
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -351,6 +363,15 @@ export default function EquipmentLoan() {
                     <Package className="h-4 w-4 mr-2" />
                     Processar Equipamento
                   </Button>
+                  
+                  <QRScanner 
+                    onScan={(result) => {
+                      setEquipmentQR(result);
+                      handleEquipmentQRScan();
+                    }}
+                    isActive={isEquipmentScanning}
+                    onToggle={() => setIsEquipmentScanning(!isEquipmentScanning)}
+                  />
                 </div>
               )}
 

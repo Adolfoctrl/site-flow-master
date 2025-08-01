@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, QrCode, Camera, Clock, CheckCircle, XCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import QRScanner from "@/components/QRScanner";
 
 interface CheckInRecord {
   id: string;
@@ -193,14 +194,17 @@ export default function CheckIn() {
                   <QrCode className="h-4 w-4 mr-2" />
                   Registrar Ponto
                 </Button>
-                
-                <Button 
-                  variant="outline" 
-                  onClick={() => setIsScanning(!isScanning)}
-                >
-                  <Camera className="h-4 w-4" />
-                </Button>
               </div>
+
+              {/* QR Scanner */}
+              <QRScanner 
+                onScan={(result) => {
+                  setQrInput(result);
+                  handleQRScan();
+                }}
+                isActive={isScanning}
+                onToggle={() => setIsScanning(!isScanning)}
+              />
 
               {/* Demo button for testing */}
               <Button 

@@ -14,6 +14,9 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import QRCode from "qrcode";
+import { EmployeeCard } from "@/components/EmployeeCard";
+import html2canvas from "html2canvas";
+import { useRef } from "react";
 
 const employeeSchema = z.object({
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
@@ -57,6 +60,7 @@ export default function Employees() {
   ]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const cardRef = useRef<HTMLDivElement>(null);
 
   const form = useForm<z.infer<typeof employeeSchema>>({
     resolver: zodResolver(employeeSchema),
@@ -102,11 +106,6 @@ export default function Employees() {
         throw new Error('Erro ao gerar QR Code');
       }
 
-      // Simulate sending WhatsApp/Email
-      // In a real app, this would call an API to send the card
-      const whatsappMessage = `Olá ${employee.name}! Seu cartão de funcionário da Tecnobra foi gerado. Use este QR Code para marcar presença na obra.`;
-      const whatsappUrl = `https://wa.me/${employee.phone.replace(/\D/g, '')}?text=${encodeURIComponent(whatsappMessage)}`;
-      
       // Save QR code to localStorage for demo
       const employeeCards = JSON.parse(localStorage.getItem('tecnobra_employee_cards') || '{}');
       employeeCards[employee.id] = {
@@ -116,16 +115,82 @@ export default function Employees() {
       };
       localStorage.setItem('tecnobra_employee_cards', JSON.stringify(employeeCards));
 
+      // Render employee card and convert to image
+      const cardElement = document.createElement('div');
+      cardElement.style.position = 'absolute';
+      cardElement.style.left = '-9999px';
+      document.body.appendChild(cardElement);
+
+      // Create a temporary React root to render the card
+      const { createRoot } = await import('react-dom/client');
+      const root = createRoot(cardElement);
+      
+      await new Promise<void>((resolve) => {
+        root.render(
+          <EmployeeCard employee={employee} qrCodeUrl={qrCodeUrl} />
+        );
+        setTimeout(resolve, 1000); // Wait for render
+      });
+
+      // Convert to canvas and get image
+      const canvas = await html2canvas(cardElement.firstChild as HTMLElement, {
+        backgroundColor: '#ffffff',
+        scale: 2
+      });
+      
+      const imageBlob = await new Promise<Blob>((resolve) => {
+        canvas.toBlob((blob) => resolve(blob!), 'image/png');
+      });
+
+      // Clean up
+      document.body.removeChild(cardElement);
+
+      // Create WhatsApp message with image
+      const whatsappMessage = `🏗️ *TECNOBRA - Cartão de Funcionário*
+
+Olá ${employee.name}!
+
+Seu cartão de funcionário foi gerado com sucesso. Use o QR Code do cartão para:
+✅ Marcar presença na obra
+✅ Retirar equipamentos
+✅ Identificação no local
+
+*Instruções:*
+• Apresente este cartão na entrada da obra
+• Use o QR Code nos pontos de controle
+• Mantenha sempre visível durante o trabalho
+
+ID Funcionário: ${employee.id}
+Departamento: ${employee.department}
+Função: ${employee.role}
+
+Para dúvidas, entre em contato com o RH.`;
+
+      const phoneNumber = employee.phone.replace(/\D/g, '');
+      const whatsappUrl = `https://wa.me/${phoneNumber}?text=${encodeURIComponent(whatsappMessage)}`;
+
+      // Create download link for the card image
+      const downloadUrl = URL.createObjectURL(imageBlob);
+      const link = document.createElement('a');
+      link.href = downloadUrl;
+      link.download = `cartao_${employee.name.replace(/\s+/g, '_')}.png`;
+
       toast({
         title: "Cartão QR Gerado!",
-        description: `Cartão de ${employee.name} criado. Clique para enviar pelo WhatsApp.`,
+        description: `Cartão de ${employee.name} criado com sucesso.`,
         action: (
-          <Button size="sm" onClick={() => window.open(whatsappUrl, '_blank')}>
-            Enviar WhatsApp
-          </Button>
+          <div className="flex gap-2">
+            <Button size="sm" onClick={() => link.click()}>
+              Baixar
+            </Button>
+            <Button size="sm" onClick={() => window.open(whatsappUrl, '_blank')}>
+              WhatsApp
+            </Button>
+          </div>
         ),
       });
     } catch (error) {
+      console.error('Erro ao gerar cartão:', error);
       toast({
         title: "Erro",
         description: "Não foi possível gerar o cartão QR",
