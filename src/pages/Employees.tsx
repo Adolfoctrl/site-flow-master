@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, Search, Edit, Trash2, User } from "lucide-react";
+import { ArrowLeft, Plus, Search, Edit, Trash2, User, QrCode } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -13,6 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import QRCode from "qrcode";
 
 const employeeSchema = z.object({
   name: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
@@ -74,11 +75,71 @@ export default function Employees() {
     emp.department.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleSubmit = (data: z.infer<typeof employeeSchema>) => {
+  const generateEmployeeQR = async (employee: Employee) => {
+    try {
+      const qrData = {
+        id: employee.id,
+        name: employee.name,
+        email: employee.email,
+        role: employee.role,
+        department: employee.department,
+        createdAt: employee.createdAt,
+        type: "employee_card"
+      };
+      
+      const qrCodeUrl = await QRCode.toDataURL(JSON.stringify(qrData));
+      return qrCodeUrl;
+    } catch (error) {
+      console.error('Erro ao gerar QR Code:', error);
+      return null;
+    }
+  };
+
+  const sendEmployeeCard = async (employee: Employee) => {
+    try {
+      const qrCodeUrl = await generateEmployeeQR(employee);
+      if (!qrCodeUrl) {
+        throw new Error('Erro ao gerar QR Code');
+      }
+
+      // Simulate sending WhatsApp/Email
+      // In a real app, this would call an API to send the card
+      const whatsappMessage = `Olá ${employee.name}! Seu cartão de funcionário da Tecnobra foi gerado. Use este QR Code para marcar presença na obra.`;
+      const whatsappUrl = `https://wa.me/${employee.phone.replace(/\D/g, '')}?text=${encodeURIComponent(whatsappMessage)}`;
+      
+      // Save QR code to localStorage for demo
+      const employeeCards = JSON.parse(localStorage.getItem('tecnobra_employee_cards') || '{}');
+      employeeCards[employee.id] = {
+        ...employee,
+        qrCodeUrl,
+        generatedAt: new Date().toISOString()
+      };
+      localStorage.setItem('tecnobra_employee_cards', JSON.stringify(employeeCards));
+
+      toast({
+        title: "Cartão QR Gerado!",
+        description: `Cartão de ${employee.name} criado. Clique para enviar pelo WhatsApp.`,
+        action: (
+          <Button size="sm" onClick={() => window.open(whatsappUrl, '_blank')}>
+            Enviar WhatsApp
+          </Button>
+        ),
+      });
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: "Não foi possível gerar o cartão QR",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleSubmit = async (data: z.infer<typeof employeeSchema>) => {
     if (editingEmployee) {
+      const updatedEmployee = { ...editingEmployee, ...data };
       setEmployees(prev => prev.map(emp => 
         emp.id === editingEmployee.id 
-          ? { ...emp, ...data }
+          ? updatedEmployee
           : emp
       ));
       toast({
@@ -93,9 +154,13 @@ export default function Employees() {
         createdAt: new Date().toISOString().split('T')[0]
       };
       setEmployees(prev => [...prev, newEmployee]);
+      
+      // Generate and send employee card automatically
+      await sendEmployeeCard(newEmployee);
+      
       toast({
         title: "Funcionário cadastrado!",
-        description: "Novo funcionário adicionado com sucesso.",
+        description: "Novo funcionário adicionado e cartão QR gerado!",
       });
     }
     setIsDialogOpen(false);
@@ -340,6 +405,14 @@ export default function Employees() {
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg">{employee.name}</CardTitle>
                   <div className="flex space-x-1">
+                    <Button 
+                      variant="ghost" 
+                      size="sm"
+                      onClick={() => sendEmployeeCard(employee)}
+                      title="Gerar/Reenviar Cartão QR"
+                    >
+                      <QrCode className="w-4 h-4" />
+                    </Button>
                     <Button 
                       variant="ghost" 
                       size="sm"

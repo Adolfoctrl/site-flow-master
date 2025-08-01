@@ -59,6 +59,22 @@ const Index = () => {
       count: "12 ativas"
     },
     {
+      id: "check-in",
+      title: "Controle de Ponto",
+      description: "Registro de entrada e saída via QR",
+      icon: Clock,
+      color: "bg-cyan-500",
+      count: "24 hoje"
+    },
+    {
+      id: "equipment-loan",
+      title: "Empréstimo de Equipamentos",
+      description: "Controle de ferramentas emprestadas",
+      icon: Package,
+      color: "bg-yellow-500",
+      count: "15 emprestados"
+    },
+    {
       id: "visitors",
       title: "Visitantes",
       description: "Controle de acesso e veículos",
@@ -223,7 +239,9 @@ const Index = () => {
                     to={module.id === 'employees' ? '/employees' : 
                          module.id === 'equipment' ? '/equipment' :
                          module.id === 'machines' ? '/machines' :
-                         module.id === 'rental-control' ? '/rental-control' : '#'}
+                         module.id === 'rental-control' ? '/rental-control' :
+                         module.id === 'check-in' ? '/check-in' :
+                         module.id === 'equipment-loan' ? '/equipment-loan' : '#'}
                   >
                     <Button className="w-full" variant="outline">
                       Acessar Módulo
