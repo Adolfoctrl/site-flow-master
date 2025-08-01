@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { ForgotPasswordForm } from "./ForgotPasswordForm";
 
 const loginSchema = z.object({
   email: z.string().email("Email inválido"),
@@ -23,6 +24,7 @@ interface LoginFormProps {
 
 export function LoginForm({ onSuccess, onToggleMode }: LoginFormProps) {
   const [isLoading, setIsLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
   const { toast } = useToast();
   const { signIn } = useAuth();
   
@@ -54,6 +56,10 @@ export function LoginForm({ onSuccess, onToggleMode }: LoginFormProps) {
     } finally {
       setIsLoading(false);
     }
+  }
+
+  if (showForgotPassword) {
+    return <ForgotPasswordForm onBack={() => setShowForgotPassword(false)} />;
   }
 
   return (
@@ -110,14 +116,23 @@ export function LoginForm({ onSuccess, onToggleMode }: LoginFormProps) {
             </Button>
           </form>
         </Form>
-        <div className="mt-4 text-center">
+        <div className="mt-4 text-center space-y-2">
           <Button 
             variant="link" 
-            onClick={onToggleMode}
+            onClick={() => setShowForgotPassword(true)}
             className="text-sm"
           >
-            Não tem conta? Registre-se
+            Esqueceu a senha?
           </Button>
+          <div>
+            <Button 
+              variant="link" 
+              onClick={onToggleMode}
+              className="text-sm"
+            >
+              Não tem conta? Registre-se
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
