@@ -3,7 +3,9 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { AuthProvider } from "@/hooks/useAuth";
+import { AuthProvider, useAuth } from "@/hooks/useAuth";
+import { AppLayout } from "@/components/AppLayout";
+import { AuthPage } from "@/components/auth/AuthPage";
 import Index from "./pages/Index";
 import Employees from "./pages/Employees";
 import Equipment from "./pages/Equipment";
@@ -17,6 +19,39 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+function AppRoutes() {
+  const { user, loading } = useAuth();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-lg">Carregando...</div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return <AuthPage onSuccess={() => {}} />;
+  }
+
+  return (
+    <AppLayout>
+      <Routes>
+        <Route path="/" element={<Index />} />
+        <Route path="/employees" element={<Employees />} />
+        <Route path="/equipment" element={<Equipment />} />
+        <Route path="/machines" element={<Machines />} />
+        <Route path="/rental-control" element={<RentalControl />} />
+        <Route path="/check-in" element={<CheckIn />} />
+        <Route path="/equipment-loan" element={<EquipmentLoan />} />
+        <Route path="/reports" element={<Reports />} />
+        <Route path="/visits" element={<Visits />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </AppLayout>
+  );
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
@@ -24,19 +59,7 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
-            <Route path="/" element={<Index />} />
-            <Route path="/employees" element={<Employees />} />
-            <Route path="/equipment" element={<Equipment />} />
-            <Route path="/machines" element={<Machines />} />
-            <Route path="/rental-control" element={<RentalControl />} />
-            <Route path="/check-in" element={<CheckIn />} />
-            <Route path="/equipment-loan" element={<EquipmentLoan />} />
-            <Route path="/reports" element={<Reports />} />
-            <Route path="/visits" element={<Visits />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <AppRoutes />
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>

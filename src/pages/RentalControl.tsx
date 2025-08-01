@@ -358,21 +358,13 @@ export default function RentalControl() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
+    <div className="p-6">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center space-x-4">
-            <Link to="/">
-              <Button variant="outline" size="sm">
-                <ArrowLeft className="w-4 h-4 mr-2" />
-                Voltar
-              </Button>
-            </Link>
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Controle de Aluguel</h1>
-              <p className="text-gray-600">Gerencie máquinas alugadas com QR Code</p>
-            </div>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Controle de Aluguel</h1>
+            <p className="text-gray-600">Gerencie máquinas alugadas com QR Code</p>
           </div>
         </div>
 
