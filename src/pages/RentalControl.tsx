@@ -52,6 +52,7 @@ interface WorkSession {
 }
 
 export default function RentalControl() {
+  console.log("RentalControl component started");
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
   const [machines, setMachines] = useState<RentalMachine[]>([]);
@@ -357,6 +358,8 @@ export default function RentalControl() {
     }
   };
 
+  console.log("RentalControl rendering, machines:", machines.length);
+  
   return (
     <div className="p-6">
       <div className="max-w-7xl mx-auto">
@@ -389,7 +392,7 @@ export default function RentalControl() {
               
               <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                 <DialogTrigger asChild>
-                  <Button>
+                  <Button onClick={() => console.log("Botão Registrar Máquina clicado")}>
                     <Plus className="w-4 h-4 mr-2" />
                     Registrar Máquina
                   </Button>
