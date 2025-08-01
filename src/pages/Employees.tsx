@@ -402,7 +402,7 @@ Para dúvidas, entre em contato com o RH.`;
                           />
                         </FormControl>
                         {field.value && (
-                          <div className="mt-2">
+                          <div className="mt-2 flex justify-center">
                             <img 
                               src={field.value} 
                               alt="Preview" 
@@ -414,7 +414,7 @@ Para dúvidas, entre em contato com o RH.`;
                       </FormItem>
                     )}
                   />
-                  <div className="flex justify-end space-x-2">
+                  <div className="flex justify-end space-x-2 pt-4 border-t">
                     <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                       Cancelar
                     </Button>
