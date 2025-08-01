@@ -18,6 +18,7 @@ const visitSchema = z.object({
   purpose: z.string().min(5, "Propósito deve ter pelo menos 5 caracteres"),
   hostEmployee: z.string().min(2, "Funcionário responsável é obrigatório"),
   expectedDuration: z.string().min(1, "Duração esperada é obrigatória"),
+  licensePlate: z.string().optional(),
 });
 
 type Visit = z.infer<typeof visitSchema> & {
@@ -26,6 +27,7 @@ type Visit = z.infer<typeof visitSchema> & {
   checkOutTime?: string;
   status: "pending" | "active" | "completed";
   createdAt: string;
+  licensePlate?: string;
 };
 
 export default function Visits() {
@@ -42,7 +44,8 @@ export default function Visits() {
       checkInTime: "2024-01-15T08:30:00",
       checkOutTime: "2024-01-15T10:45:00",
       status: "completed",
-      createdAt: "2024-01-15"
+      createdAt: "2024-01-15",
+      licensePlate: "AB-1234-CD"
     },
     {
       id: "2",
@@ -53,7 +56,8 @@ export default function Visits() {
       expectedDuration: "3 horas",
       checkInTime: "2024-01-15T14:00:00",
       status: "active",
-      createdAt: "2024-01-15"
+      createdAt: "2024-01-15",
+      licensePlate: "XY-5678-EF"
     },
     {
       id: "3",
@@ -77,6 +81,7 @@ export default function Visits() {
       purpose: "",
       hostEmployee: "",
       expectedDuration: "",
+      licensePlate: "",
     },
   });
 
@@ -238,6 +243,19 @@ export default function Visits() {
                       </FormItem>
                     )}
                   />
+                  <FormField
+                    control={form.control}
+                    name="licensePlate"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Matrícula do Veículo (Opcional)</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Ex: AB-1234-CD" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                   <div className="flex justify-end space-x-2">
                     <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                       Cancelar
@@ -343,6 +361,11 @@ export default function Visits() {
                   <p className="text-sm text-gray-600">
                     <strong>Duração:</strong> {visit.expectedDuration}
                   </p>
+                  {visit.licensePlate && (
+                    <p className="text-sm text-gray-600">
+                      <strong>Matrícula:</strong> {visit.licensePlate}
+                    </p>
+                  )}
                   {visit.checkInTime && (
                     <p className="text-sm text-gray-600">
                       <strong>Entrada:</strong> {new Date(visit.checkInTime).toLocaleString('pt-BR')}
