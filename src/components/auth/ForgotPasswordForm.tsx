@@ -46,13 +46,18 @@ export function ForgotPasswordForm({ onBack }: ForgotPasswordFormProps) {
     
     // Verificar se o email existe
     const users = JSON.parse(localStorage.getItem('tecnobra_users') || '[]');
-    const userExists = users.find((u: any) => u.email === data.email);
+    console.log('Usuários cadastrados:', users);
+    console.log('Email procurado:', data.email);
+    
+    const userExists = users.find((u: any) => u.email.toLowerCase() === data.email.toLowerCase());
     
     if (!userExists) {
+      // Mostrar emails disponíveis para debug
+      const availableEmails = users.map((u: any) => u.email).join(', ');
       toast({
         variant: "destructive",
         title: "Email não encontrado",
-        description: "Este email não está cadastrado no sistema.",
+        description: `Este email não está cadastrado. Emails disponíveis: ${availableEmails || 'Nenhum usuário cadastrado'}`,
       });
       setIsLoading(false);
       return;
