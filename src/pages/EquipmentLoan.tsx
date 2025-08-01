@@ -121,6 +121,26 @@ export default function EquipmentLoan() {
     }
   };
 
+  const getEquipmentAction = (equipmentQR: string) => {
+    if (!equipmentQR.trim()) return null;
+    
+    try {
+      const equipmentData = JSON.parse(equipmentQR);
+      const existingLoan = loanRecords.find(record => 
+        record.equipmentId === equipmentData.id && 
+        record.status === "borrowed"
+      );
+      
+      return {
+        equipmentData,
+        action: existingLoan ? "return" : "loan",
+        existingLoan
+      };
+    } catch {
+      return null;
+    }
+  };
+
   const handleEquipmentQRScan = () => {
     if (!equipmentQR.trim()) {
       toast({
@@ -359,10 +379,45 @@ export default function EquipmentLoan() {
                     onChange={(e) => setEquipmentQR(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleEquipmentQRScan()}
                   />
+                  
+                  {/* Preview da ação que vai ser executada */}
+                  {equipmentQR && getEquipmentAction(equipmentQR) && (
+                    <div className={`p-3 rounded-lg border ${
+                      getEquipmentAction(equipmentQR)?.action === "return" 
+                        ? "bg-blue-50 border-blue-200" 
+                        : "bg-orange-50 border-orange-200"
+                    }`}>
+                      <div className="flex items-center gap-2">
+                        <Package className={`h-4 w-4 ${
+                          getEquipmentAction(equipmentQR)?.action === "return" 
+                            ? "text-blue-600" 
+                            : "text-orange-600"
+                        }`} />
+                        <span className={`font-medium ${
+                          getEquipmentAction(equipmentQR)?.action === "return" 
+                            ? "text-blue-800" 
+                            : "text-orange-800"
+                        }`}>
+                          {getEquipmentAction(equipmentQR)?.action === "return" 
+                            ? `🔄 DEVOLUÇÃO: ${getEquipmentAction(equipmentQR)?.equipmentData.name}` 
+                            : `📤 EMPRÉSTIMO: ${getEquipmentAction(equipmentQR)?.equipmentData.name}`
+                          }
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                  
                   <div className="flex gap-2">
-                    <Button onClick={handleEquipmentQRScan} className="flex-1">
+                    <Button 
+                      onClick={handleEquipmentQRScan} 
+                      className="flex-1"
+                      variant={equipmentQR && getEquipmentAction(equipmentQR)?.action === "return" ? "default" : "default"}
+                    >
                       <Package className="h-4 w-4 mr-2" />
-                      Processar Equipamento
+                      {equipmentQR && getEquipmentAction(equipmentQR) 
+                        ? (getEquipmentAction(equipmentQR)?.action === "return" ? "Devolver" : "Emprestar")
+                        : "Processar Equipamento"
+                      }
                     </Button>
                     <Button 
                       variant="outline" 
@@ -376,7 +431,7 @@ export default function EquipmentLoan() {
                   <QRScanner 
                     onScan={(result) => {
                       setEquipmentQR(result);
-                      handleEquipmentQRScan();
+                      setTimeout(() => handleEquipmentQRScan(), 100);
                     }}
                     isActive={isEquipmentScanning}
                     onToggle={() => setIsEquipmentScanning(!isEquipmentScanning)}
