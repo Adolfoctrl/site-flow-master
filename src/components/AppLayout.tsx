@@ -1,11 +1,13 @@
-import { ReactNode } from "react";
+import { ReactNode, useState } from "react";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/components/AppSidebar";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { QrCode, Settings, LogOut } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { QrCode, Settings, LogOut, User, ChevronDown } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { ProfileEditDialog } from "@/components/auth/ProfileEditDialog";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -14,6 +16,7 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps) {
   const { user, signOut } = useAuth();
   const { toast } = useToast();
+  const [profileDialogOpen, setProfileDialogOpen] = useState(false);
 
   const handleSignOut = async () => {
     await signOut();
@@ -42,27 +45,43 @@ export function AppLayout({ children }: AppLayoutProps) {
           </div>
           
           <div className="flex items-center space-x-4">
-            <div className="text-right">
-              <p className="text-sm text-gray-600">Bem-vindo,</p>
-              <p className="font-semibold text-gray-900">{user?.name || user?.email}</p>
-              <Badge variant="outline" className="text-xs">
-                {user?.role || 'Usuário'} - {user?.company || 'Empresa'}
-              </Badge>
-            </div>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" className="text-right p-2 hover:bg-gray-100">
+                  <div className="flex items-center space-x-2">
+                    <div>
+                      <p className="text-sm text-gray-600">Bem-vindo,</p>
+                      <p className="font-semibold text-gray-900">{user?.name || user?.email}</p>
+                      <Badge variant="outline" className="text-xs">
+                        {user?.role || 'Usuário'} - {user?.company || 'Empresa'}
+                      </Badge>
+                    </div>
+                    <ChevronDown className="w-4 h-4 text-gray-500" />
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem onClick={() => setProfileDialogOpen(true)}>
+                  <User className="w-4 h-4 mr-2" />
+                  Editar Perfil
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={handleSignOut}>
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sair
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Button variant="outline" size="sm">
               <Settings className="w-4 h-4 mr-2" />
               Configurações
             </Button>
-            <Button 
-              variant="outline" 
-              size="sm"
-              onClick={handleSignOut}
-            >
-              <LogOut className="w-4 h-4 mr-2" />
-              Sair
-            </Button>
           </div>
         </header>
+
+        <ProfileEditDialog 
+          open={profileDialogOpen} 
+          onOpenChange={setProfileDialogOpen} 
+        />
 
         <div className="flex w-full pt-16">
           <AppSidebar />
