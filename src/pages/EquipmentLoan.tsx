@@ -195,8 +195,8 @@ export default function EquipmentLoan() {
     localStorage.setItem('tecnobra_equipment_list', JSON.stringify(updatedEquipment));
 
     toast({
-      title: "Equipamento Emprestado",
-      description: `${equipmentData.name} emprestado para ${selectedEmployee.name}`,
+      title: "Equipamento Entregue",
+      description: `${equipmentData.name} entregue para ${selectedEmployee.name}`,
     });
 
     resetForm();
@@ -280,9 +280,9 @@ export default function EquipmentLoan() {
               </Button>
             </Link>
             <div>
-              <h1 className="text-3xl font-bold">Empréstimo de Equipamentos</h1>
+              <h1 className="text-3xl font-bold">Controle de Equipamentos</h1>
               <p className="text-muted-foreground">
-                Sistema de controle de ferramentas e equipamentos
+                Sistema de entrega e devolução de ferramentas e equipamentos
               </p>
             </div>
           </div>
@@ -307,7 +307,7 @@ export default function EquipmentLoan() {
               <CardDescription>
                 {currentStep === "employee" 
                   ? "Primeiro, identifique o funcionário com o cartão QR"
-                  : "Agora escaneie o equipamento para emprestar/devolver"
+                  : "Agora escaneie o equipamento para entregar/devolver"
                 }
               </CardDescription>
             </CardHeader>
@@ -359,10 +359,19 @@ export default function EquipmentLoan() {
                     onChange={(e) => setEquipmentQR(e.target.value)}
                     onKeyPress={(e) => e.key === 'Enter' && handleEquipmentQRScan()}
                   />
-                  <Button onClick={handleEquipmentQRScan} className="w-full">
-                    <Package className="h-4 w-4 mr-2" />
-                    Processar Equipamento
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button onClick={handleEquipmentQRScan} className="flex-1">
+                      <Package className="h-4 w-4 mr-2" />
+                      Processar Equipamento
+                    </Button>
+                    <Button 
+                      variant="outline" 
+                      onClick={resetForm}
+                      className="px-4"
+                    >
+                      <RotateCcw className="h-4 w-4" />
+                    </Button>
+                  </div>
                   
                   <QRScanner 
                     onScan={(result) => {
@@ -380,7 +389,7 @@ export default function EquipmentLoan() {
                 onClick={handleDemoLoan}
                 className="w-full"
               >
-                Demo - Empréstimo Automático
+                Demo - Entrega Automática
               </Button>
             </CardContent>
           </Card>
@@ -399,7 +408,7 @@ export default function EquipmentLoan() {
                   <div className="text-2xl font-bold text-orange-600">
                     {getCurrentlyBorrowed().length}
                   </div>
-                  <div className="text-sm text-orange-600">Emprestados</div>
+                  <div className="text-sm text-orange-600">Entregues</div>
                 </div>
                 
                 <div className="text-center p-4 bg-green-50 rounded-lg">
@@ -429,15 +438,15 @@ export default function EquipmentLoan() {
         {/* Current Loans */}
         <Card className="mt-6">
           <CardHeader>
-            <CardTitle>Empréstimos Ativos</CardTitle>
+            <CardTitle>Equipamentos Entregues</CardTitle>
             <CardDescription>
-              Equipamentos atualmente emprestados
+              Equipamentos atualmente entregues aos funcionários
             </CardDescription>
           </CardHeader>
           <CardContent>
             {getCurrentlyBorrowed().length === 0 ? (
               <div className="text-center py-8 text-muted-foreground">
-                Nenhum equipamento emprestado no momento
+                Nenhum equipamento entregue no momento
               </div>
             ) : (
               <div className="space-y-2">
@@ -457,7 +466,7 @@ export default function EquipmentLoan() {
                     </div>
                     
                     <Badge variant="destructive">
-                      Emprestado
+                      Entregue
                     </Badge>
                   </div>
                 ))}
@@ -471,7 +480,7 @@ export default function EquipmentLoan() {
           <CardHeader>
             <CardTitle>Atividade de Hoje</CardTitle>
             <CardDescription>
-              Empréstimos e devoluções do dia
+              Entregas e devoluções do dia
             </CardDescription>
           </CardHeader>
           <CardContent>

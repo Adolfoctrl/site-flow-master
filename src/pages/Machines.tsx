@@ -4,8 +4,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Plus, Search, Edit, Trash2, Cog, Activity, AlertTriangle } from "lucide-react";
+import { ArrowLeft, Plus, Search, Edit, Trash2, Cog, Activity, AlertTriangle, QrCode, Camera } from "lucide-react";
 import { Link } from "react-router-dom";
+import QRCode from "qrcode";
 
 interface Machine {
   id: string;
@@ -19,11 +20,22 @@ interface Machine {
   location: string;
   operator: string;
   lastUpdate: string;
+  qrCode?: string;
+  photo?: string;
 }
 
 export default function Machines() {
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
+  const [isAddingMachine, setIsAddingMachine] = useState(false);
+  const [newMachine, setNewMachine] = useState({
+    name: "",
+    type: "",
+    model: "",
+    location: "",
+    operator: "",
+    photo: ""
+  });
   const [machines, setMachines] = useState<Machine[]>([
     {
       id: "1",
@@ -137,6 +149,87 @@ export default function Machines() {
     return (now - lastUpdateTime) < 60000; // Online se atualizado nos últimos 60 segundos
   };
 
+  const generateQRCode = async (machineData: any) => {
+    try {
+      const qrString = JSON.stringify({
+        id: machineData.id,
+        name: machineData.name,
+        type: machineData.type,
+        model: machineData.model
+      });
+      return await QRCode.toDataURL(qrString);
+    } catch (error) {
+      console.error('Erro ao gerar QR Code:', error);
+      return '';
+    }
+  };
+
+  const handleAddMachine = () => {
+    setIsAddingMachine(true);
+  };
+
+  const handleSaveMachine = async () => {
+    if (!newMachine.name || !newMachine.type || !newMachine.model) {
+      toast({
+        title: "Erro",
+        description: "Preencha todos os campos obrigatórios",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const machineId = Date.now().toString();
+    const machineData = {
+      id: machineId,
+      name: newMachine.name,
+      type: newMachine.type,
+      model: newMachine.model,
+      location: newMachine.location || "Não informado",
+      operator: newMachine.operator || "Não informado",
+      photo: newMachine.photo
+    };
+
+    const qrCode = await generateQRCode(machineData);
+
+    const machine: Machine = {
+      ...machineData,
+      status: "stopped",
+      efficiency: 0,
+      uptime: 0,
+      production: 0,
+      lastUpdate: new Date().toISOString(),
+      qrCode
+    };
+
+    setMachines([...machines, machine]);
+    
+    setNewMachine({
+      name: "",
+      type: "",
+      model: "",
+      location: "",
+      operator: "",
+      photo: ""
+    });
+    setIsAddingMachine(false);
+
+    toast({
+      title: "Máquina Registrada",
+      description: `${machine.name} foi registrada com sucesso`,
+    });
+  };
+
+  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setNewMachine({ ...newMachine, photo: reader.result as string });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   return (
     <div className="p-6">
       <div className="max-w-7xl mx-auto">
@@ -147,7 +240,7 @@ export default function Machines() {
             <p className="text-gray-600">Monitoramento em tempo real das máquinas</p>
           </div>
           
-          <Button>
+          <Button onClick={() => handleAddMachine()}>
             <Plus className="w-4 h-4 mr-2" />
             Nova Máquina
           </Button>
@@ -235,6 +328,97 @@ export default function Machines() {
           </Card>
         </div>
 
+        {/* Add Machine Form */}
+        {isAddingMachine && (
+          <Card className="mb-6">
+            <CardHeader>
+              <CardTitle>Nova Máquina</CardTitle>
+              <CardDescription>Registrar uma nova máquina no sistema</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">Nome da Máquina *</label>
+                  <Input
+                    placeholder="Ex: Linha de Produção A"
+                    value={newMachine.name}
+                    onChange={(e) => setNewMachine({ ...newMachine, name: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Tipo *</label>
+                  <Input
+                    placeholder="Ex: Linha de Montagem"
+                    value={newMachine.type}
+                    onChange={(e) => setNewMachine({ ...newMachine, type: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Modelo *</label>
+                  <Input
+                    placeholder="Ex: LM-2000"
+                    value={newMachine.model}
+                    onChange={(e) => setNewMachine({ ...newMachine, model: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Localização</label>
+                  <Input
+                    placeholder="Ex: Setor A"
+                    value={newMachine.location}
+                    onChange={(e) => setNewMachine({ ...newMachine, location: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Operador</label>
+                  <Input
+                    placeholder="Ex: João Silva"
+                    value={newMachine.operator}
+                    onChange={(e) => setNewMachine({ ...newMachine, operator: e.target.value })}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Foto da Máquina</label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={handlePhotoUpload}
+                      className="flex-1"
+                    />
+                    <Button variant="outline" size="icon">
+                      <Camera className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+              
+              {newMachine.photo && (
+                <div className="mt-4">
+                  <img
+                    src={newMachine.photo}
+                    alt="Preview"
+                    className="h-32 w-32 object-cover rounded-lg border"
+                  />
+                </div>
+              )}
+
+              <div className="flex gap-2 pt-4">
+                <Button onClick={handleSaveMachine} className="flex-1">
+                  <QrCode className="h-4 w-4 mr-2" />
+                  Registrar Máquina
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsAddingMachine(false)}
+                >
+                  Cancelar
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Machine List */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {filteredMachines.map((machine) => (
@@ -262,6 +446,14 @@ export default function Machines() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
+                  {machine.photo && (
+                    <img
+                      src={machine.photo}
+                      alt={machine.name}
+                      className="w-full h-32 object-cover rounded-lg"
+                    />
+                  )}
+                  
                   <div className="flex items-center justify-between">
                     <Badge className={getStatusColor(machine.status)}>
                       {getStatusIcon(machine.status)}
@@ -304,6 +496,16 @@ export default function Machines() {
                     <p className="text-sm text-gray-600">
                       <strong>Última atualização:</strong> {new Date(machine.lastUpdate).toLocaleTimeString('pt-BR')}
                     </p>
+                    {machine.qrCode && (
+                      <div className="mt-2 pt-2 border-t">
+                        <img
+                          src={machine.qrCode}
+                          alt="QR Code"
+                          className="w-16 h-16 mx-auto"
+                        />
+                        <p className="text-xs text-center text-gray-500 mt-1">QR Code</p>
+                      </div>
+                    )}
                   </div>
                 </div>
               </CardContent>
