@@ -15,8 +15,8 @@ const registerSchema = z.object({
   password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
   confirmPassword: z.string(),
   fullName: z.string().min(2, "Nome deve ter pelo menos 2 caracteres"),
-  role: z.enum(["admin", "supervisor", "worker", "visitor"], {
-    required_error: "Selecione um tipo de usuário",
+  role: z.enum(["admin", "manager", "employee"], {
+    required_error: "Selecione um papel",
   }),
   company: z.string().min(2, "Nome da empresa é obrigatório"),
 }).refine((data) => data.password === data.confirmPassword, {
@@ -35,7 +35,7 @@ export function RegisterForm({ onSuccess, onToggleMode }: RegisterFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { signUp } = useAuth();
-  
+
   const form = useForm<RegisterFormData>({
     resolver: zodResolver(registerSchema),
     defaultValues: {
@@ -43,45 +43,54 @@ export function RegisterForm({ onSuccess, onToggleMode }: RegisterFormProps) {
       password: "",
       confirmPassword: "",
       fullName: "",
-      role: undefined,
+      role: "employee",
       company: "",
     },
   });
 
-  async function onSubmit(data: RegisterFormData) {
+  const onSubmit = async (data: RegisterFormData) => {
     setIsLoading(true);
     try {
       await signUp({
         email: data.email,
         password: data.password,
         name: data.fullName,
-        role: data.role,
         company: data.company,
+        role: data.role,
       });
-
       toast({
-        title: "Registro realizado com sucesso!",
-        description: "Bem-vindo ao Tecnobra",
+        title: "Conta criada com sucesso!",
+        description: "Bem-vindo ao sistema TECNOBRA.",
       });
-      
       onSuccess();
-    } catch (error: any) {
+    } catch (error) {
       toast({
-        title: "Erro no registro",
-        description: error.message || "Erro ao criar conta",
         variant: "destructive",
+        title: "Erro no cadastro",
+        description: error instanceof Error ? error.message : "Erro desconhecido",
       });
     } finally {
       setIsLoading(false);
     }
-  }
+  };
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full max-w-md mx-auto">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold">Registrar</CardTitle>
-        <CardDescription>
-          Crie sua conta para acessar o sistema Tecnobra
+        <div className="text-center mb-6">
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <span className="text-2xl font-bold text-white">T</span>
+          </div>
+          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            TECNOBRA
+          </CardTitle>
+          <CardDescription className="text-lg">
+            Sistema de Gestão
+          </CardDescription>
+        </div>
+        <CardTitle className="text-xl text-center">Criar nova conta</CardTitle>
+        <CardDescription className="text-center">
+          Preencha os dados abaixo para se cadastrar
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -94,7 +103,11 @@ export function RegisterForm({ onSuccess, onToggleMode }: RegisterFormProps) {
                 <FormItem>
                   <FormLabel>Nome Completo</FormLabel>
                   <FormControl>
-                    <Input placeholder="Seu nome completo" {...field} />
+                    <Input
+                      placeholder="Seu nome completo"
+                      disabled={isLoading}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -107,10 +120,11 @@ export function RegisterForm({ onSuccess, onToggleMode }: RegisterFormProps) {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input 
-                      type="email" 
-                      placeholder="seu@email.com" 
-                      {...field} 
+                    <Input
+                      type="email"
+                      placeholder="seu@email.com"
+                      disabled={isLoading}
+                      {...field}
                     />
                   </FormControl>
                   <FormMessage />
@@ -124,7 +138,11 @@ export function RegisterForm({ onSuccess, onToggleMode }: RegisterFormProps) {
                 <FormItem>
                   <FormLabel>Empresa</FormLabel>
                   <FormControl>
-                    <Input placeholder="Nome da empresa" {...field} />
+                    <Input
+                      placeholder="Nome da sua empresa"
+                      disabled={isLoading}
+                      {...field}
+                    />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -135,76 +153,77 @@ export function RegisterForm({ onSuccess, onToggleMode }: RegisterFormProps) {
               name="role"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Tipo de Usuário</FormLabel>
+                  <FormLabel>Papel no Sistema</FormLabel>
                   <Select onValueChange={field.onChange} defaultValue={field.value}>
                     <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Selecione o tipo" />
+                      <SelectTrigger disabled={isLoading}>
+                        <SelectValue placeholder="Selecione seu papel" />
                       </SelectTrigger>
                     </FormControl>
                     <SelectContent>
+                      <SelectItem value="employee">Funcionário</SelectItem>
+                      <SelectItem value="manager">Gerente</SelectItem>
                       <SelectItem value="admin">Administrador</SelectItem>
-                      <SelectItem value="supervisor">Supervisor</SelectItem>
-                      <SelectItem value="worker">Trabalhador</SelectItem>
-                      <SelectItem value="visitor">Visitante</SelectItem>
                     </SelectContent>
                   </Select>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Senha</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="password" 
-                      placeholder="••••••••" 
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="confirmPassword"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Confirmar Senha</FormLabel>
-                  <FormControl>
-                    <Input 
-                      type="password" 
-                      placeholder="••••••••" 
-                      {...field} 
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={isLoading}
-            >
-              {isLoading ? "Registrando..." : "Registrar"}
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="password"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Senha</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="Mínimo 6 caracteres"
+                        disabled={isLoading}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="confirmPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Confirmar Senha</FormLabel>
+                    <FormControl>
+                      <Input
+                        type="password"
+                        placeholder="Repita a senha"
+                        disabled={isLoading}
+                        {...field}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
+            <Button type="submit" className="w-full" disabled={isLoading}>
+              {isLoading ? "Criando conta..." : "Criar conta"}
             </Button>
+            <div className="text-center">
+              <span className="text-sm text-muted-foreground">Já tem uma conta? </span>
+              <Button
+                type="button"
+                variant="link"
+                className="p-0 h-auto font-normal text-sm"
+                onClick={onToggleMode}
+              >
+                Entre aqui
+              </Button>
+            </div>
           </form>
         </Form>
-        <div className="mt-4 text-center">
-          <Button 
-            variant="link" 
-            onClick={onToggleMode}
-            className="text-sm"
-          >
-            Já tem conta? Faça login
-          </Button>
-        </div>
       </CardContent>
     </Card>
   );

@@ -12,7 +12,7 @@ import { ForgotPasswordForm } from "./ForgotPasswordForm";
 
 const loginSchema = z.object({
   email: z.string().email("Email inválido"),
-  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
+  password: z.string().min(1, "Senha é obrigatória"),
 });
 
 type LoginFormData = z.infer<typeof loginSchema>;
@@ -27,7 +27,7 @@ export function LoginForm({ onSuccess, onToggleMode }: LoginFormProps) {
   const [showForgotPassword, setShowForgotPassword] = useState(false);
   const { toast } = useToast();
   const { signIn } = useAuth();
-  
+
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: {
@@ -36,38 +36,47 @@ export function LoginForm({ onSuccess, onToggleMode }: LoginFormProps) {
     },
   });
 
-  async function onSubmit(data: LoginFormData) {
+  const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     try {
       await signIn(data.email, data.password);
-
       toast({
         title: "Login realizado com sucesso!",
-        description: "Bem-vindo ao Tecnobra",
+        description: "Bem-vindo ao sistema TECNOBRA.",
       });
-      
       onSuccess();
-    } catch (error: any) {
+    } catch (error) {
       toast({
-        title: "Erro no login",
-        description: error.message || "Verifique suas credenciais",
         variant: "destructive",
+        title: "Erro no login",
+        description: error instanceof Error ? error.message : "Erro desconhecido",
       });
     } finally {
       setIsLoading(false);
     }
-  }
+  };
 
   if (showForgotPassword) {
     return <ForgotPasswordForm onBack={() => setShowForgotPassword(false)} />;
   }
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full max-w-md mx-auto">
       <CardHeader className="space-y-1">
-        <CardTitle className="text-2xl font-bold">Entrar</CardTitle>
-        <CardDescription>
-          Digite seu email e senha para acessar o sistema
+        <div className="text-center mb-6">
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <span className="text-2xl font-bold text-white">T</span>
+          </div>
+          <CardTitle className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            TECNOBRA
+          </CardTitle>
+          <CardDescription className="text-lg">
+            Sistema de Gestão
+          </CardDescription>
+        </div>
+        <CardTitle className="text-xl text-center">Entrar na sua conta</CardTitle>
+        <CardDescription className="text-center">
+          Digite suas credenciais para acessar o sistema
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -80,10 +89,11 @@ export function LoginForm({ onSuccess, onToggleMode }: LoginFormProps) {
                 <FormItem>
                   <FormLabel>Email</FormLabel>
                   <FormControl>
-                    <Input 
-                      type="email" 
-                      placeholder="seu@email.com" 
-                      {...field} 
+                    <Input
+                      type="email"
+                      placeholder="seu@email.com"
+                      disabled={isLoading}
+                      {...field}
                     />
                   </FormControl>
                   <FormMessage />
@@ -97,43 +107,43 @@ export function LoginForm({ onSuccess, onToggleMode }: LoginFormProps) {
                 <FormItem>
                   <FormLabel>Senha</FormLabel>
                   <FormControl>
-                    <Input 
-                      type="password" 
-                      placeholder="••••••••" 
-                      {...field} 
+                    <Input
+                      type="password"
+                      placeholder="Digite sua senha"
+                      disabled={isLoading}
+                      {...field}
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
-            <Button 
-              type="submit" 
-              className="w-full" 
-              disabled={isLoading}
-            >
+            <div className="text-right">
+              <Button
+                type="button"
+                variant="link"
+                className="p-0 h-auto font-normal text-sm"
+                onClick={() => setShowForgotPassword(true)}
+              >
+                Esqueceu sua senha?
+              </Button>
+            </div>
+            <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? "Entrando..." : "Entrar"}
             </Button>
+            <div className="text-center">
+              <span className="text-sm text-muted-foreground">Não tem uma conta? </span>
+              <Button
+                type="button"
+                variant="link"
+                className="p-0 h-auto font-normal text-sm"
+                onClick={onToggleMode}
+              >
+                Cadastre-se
+              </Button>
+            </div>
           </form>
         </Form>
-        <div className="mt-4 text-center space-y-2">
-          <Button 
-            variant="link" 
-            onClick={() => setShowForgotPassword(true)}
-            className="text-sm"
-          >
-            Esqueceu a senha?
-          </Button>
-          <div>
-            <Button 
-              variant="link" 
-              onClick={onToggleMode}
-              className="text-sm"
-            >
-              Não tem conta? Registre-se
-            </Button>
-          </div>
-        </div>
       </CardContent>
     </Card>
   );
