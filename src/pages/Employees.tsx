@@ -14,6 +14,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { generateEmployeeQR } from "@/utils/qrCodeUtils";
 import { EmployeeCard } from "@/components/EmployeeCard";
+import { EmployeeDetailDialog } from "@/components/EmployeeDetailDialog";
 import html2canvas from "html2canvas";
 import { useRef } from "react";
 
@@ -493,6 +494,15 @@ Para dúvidas, entre em contato com o RH.`;
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-lg">{employee.name}</CardTitle>
                   <div className="flex space-x-1">
+                    <EmployeeDetailDialog employee={employee}>
+                      <Button 
+                        variant="ghost" 
+                        size="sm"
+                        title="Ver Ficha Completa"
+                      >
+                        <User className="w-4 h-4" />
+                      </Button>
+                    </EmployeeDetailDialog>
                     <Button 
                       variant="ghost" 
                       size="sm"

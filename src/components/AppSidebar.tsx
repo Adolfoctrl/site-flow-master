@@ -20,7 +20,8 @@ import {
   Settings,
   BarChart3,
   UserCheck,
-  Home
+  Home,
+  Shield
 } from "lucide-react";
 
 const menuItems = [
@@ -36,6 +37,7 @@ const menuItems = [
     items: [
       { title: "Funcionários", url: "/employees", icon: Users },
       { title: "Equipamentos", url: "/equipment", icon: Package },
+      { title: "Segurança", url: "/safety", icon: Shield },
       { title: "Máquinas", url: "/machines", icon: Settings },
       { title: "Empréstimo de Equipamentos", url: "/equipment-loan", icon: Package },
     ]

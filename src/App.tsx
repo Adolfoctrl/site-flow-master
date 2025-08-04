@@ -13,6 +13,7 @@ import Machines from "./pages/Machines";
 import RentalControl from "./pages/RentalControl";
 import CheckIn from "./pages/CheckIn";
 import EquipmentLoan from "./pages/EquipmentLoan";
+import Safety from "./pages/Safety";
 import Reports from "./pages/Reports";
 import Visits from "./pages/Visits";
 import NotFound from "./pages/NotFound";
@@ -40,6 +41,7 @@ function AppRoutes() {
         <Route path="/" element={<Index />} />
         <Route path="/employees" element={<Employees />} />
         <Route path="/equipment" element={<Equipment />} />
+        <Route path="/safety" element={<Safety />} />
         <Route path="/machines" element={<Machines />} />
         <Route path="/rental-control" element={<RentalControl />} />
         <Route path="/check-in" element={<CheckIn />} />
