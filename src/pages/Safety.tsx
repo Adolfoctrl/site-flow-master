@@ -255,7 +255,7 @@ export default function Safety() {
                          equipment.type.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          equipment.deliveredTo.toLowerCase().includes(searchTerm.toLowerCase());
     
-    const matchesEmployee = selectedEmployeeFilter === "" || equipment.employeeId === selectedEmployeeFilter;
+    const matchesEmployee = selectedEmployeeFilter === "" || selectedEmployeeFilter === "all" || equipment.employeeId === selectedEmployeeFilter;
     
     return matchesSearch && matchesEmployee;
   });
@@ -307,7 +307,7 @@ export default function Safety() {
             <SelectValue placeholder="Filtrar por funcionário" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todos os funcionários</SelectItem>
+            <SelectItem value="all">Todos os funcionários</SelectItem>
             {employees.map((employee) => (
               <SelectItem key={employee.id} value={employee.id}>
                 {employee.name} - {employee.department}
