@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import QRCode from "qrcode";
+import { generateEmployeeQR } from "@/utils/qrCodeUtils";
 import { EmployeeCard } from "@/components/EmployeeCard";
 import html2canvas from "html2canvas";
 import { useRef } from "react";
@@ -80,19 +80,9 @@ export default function Employees() {
     emp.department.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const generateEmployeeQR = async (employee: Employee) => {
+  const generateEmployeeQRCode = async (employee: Employee) => {
     try {
-      const qrData = {
-        id: employee.id,
-        name: employee.name,
-        email: employee.email,
-        role: employee.role,
-        department: employee.department,
-        createdAt: employee.createdAt,
-        type: "employee_card"
-      };
-      
-      const qrCodeUrl = await QRCode.toDataURL(JSON.stringify(qrData));
+      const qrCodeUrl = await generateEmployeeQR(employee);
       return qrCodeUrl;
     } catch (error) {
       console.error('Erro ao gerar QR Code:', error);
@@ -102,7 +92,7 @@ export default function Employees() {
 
   const sendEmployeeCard = async (employee: Employee) => {
     try {
-      const qrCodeUrl = await generateEmployeeQR(employee);
+      const qrCodeUrl = await generateEmployeeQRCode(employee);
       if (!qrCodeUrl) {
         throw new Error('Erro ao gerar QR Code');
       }

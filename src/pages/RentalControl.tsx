@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import QRCode from "qrcode";
+import { generateMachineQR } from "@/utils/qrCodeUtils";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 const rentalMachineSchema = z.object({
@@ -101,12 +101,13 @@ export default function RentalControl() {
 
   const generateQRCode = async (machineId: string): Promise<string> => {
     try {
-      const qrData = {
-        type: "rental_machine",
-        machineId,
-        timestamp: new Date().toISOString()
+      const machineData = {
+        id: machineId,
+        name: `Máquina ${machineId}`,
+        type: "rental_machine"
       };
-      const qrCodeDataURL = await QRCode.toDataURL(JSON.stringify(qrData));
+      
+      const qrCodeDataURL = await generateMachineQR(machineData);
       return qrCodeDataURL;
     } catch (error) {
       console.error('Erro ao gerar QR Code:', error);

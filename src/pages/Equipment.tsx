@@ -7,7 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Plus, Search, Edit, Trash2, Settings, QrCode, Printer } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import QRCode from "qrcode";
+import { generateEquipmentQR } from "@/utils/qrCodeUtils";
 
 interface Equipment {
   id: string;
@@ -105,17 +105,11 @@ export default function Equipment() {
 
   const generateQRCode = async (equipmentData: any) => {
     try {
-      const qrData = JSON.stringify({
-        id: equipmentData.id,
-        name: equipmentData.name,
-        serialNumber: equipmentData.serialNumber,
-        type: equipmentData.type
-      });
-      const qrCodeDataURL = await QRCode.toDataURL(qrData);
+      const qrCodeDataURL = await generateEquipmentQR(equipmentData);
       return qrCodeDataURL;
     } catch (error) {
       console.error('Erro ao gerar QR Code:', error);
-      return null;
+      return '';
     }
   };
 

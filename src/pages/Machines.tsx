@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Plus, Search, Edit, Trash2, Cog, Activity, AlertTriangle, QrCode, Camera } from "lucide-react";
 import { Link } from "react-router-dom";
-import QRCode from "qrcode";
+import { generateMachineQR } from "@/utils/qrCodeUtils";
 
 interface Machine {
   id: string;
@@ -151,13 +151,7 @@ export default function Machines() {
 
   const generateQRCode = async (machineData: any) => {
     try {
-      const qrString = JSON.stringify({
-        id: machineData.id,
-        name: machineData.name,
-        type: machineData.type,
-        model: machineData.model
-      });
-      return await QRCode.toDataURL(qrString);
+      return await generateMachineQR(machineData);
     } catch (error) {
       console.error('Erro ao gerar QR Code:', error);
       return '';
